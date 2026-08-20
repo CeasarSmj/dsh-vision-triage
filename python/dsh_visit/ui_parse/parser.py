@@ -114,9 +114,17 @@ def parse_ui_screenshot(image_path) -> dict:
             # 映射为规范输出（bbox 为 ratio 坐标 → 还原像素坐标）
             elements = []
             texts = []
+            skipped = 0
             for elem in parsed_content_list or []:
-                box = elem.get("bbox") or [0, 0, 0, 0]
-                bbox = [int(box[0] * w), int(box[1] * h), int(box[2] * w), int(box[3] * h)]
+                # 防御：上游（深色/纯色截图等场景）可能产出非 dict 元素或
+                # 结构异常的 bbox（dict/str/长度不符），逐个归一化，坏数据跳过
+                if not isinstance(elem, dict):
+                    skipped += 1
+                    continue
+                bbox = _normalize_bbox(elem.get("bbox"), w, h)
+                if bbox is None:
+                    skipped += 1
+                    continue
                 content = elem.get("content") or ""
                 if elem.get("type") == "text":
                     texts.append(content)
@@ -129,7 +137,7 @@ def parse_ui_screenshot(image_path) -> dict:
             "element_count": len(elements),
             "elements": elements,
             "texts": texts,
-            "message": "",
+            "message": f"已跳过 {skipped} 个 bbox 结构异常的元素" if skipped else "",
         }
     except Exception as exc:
         return {
@@ -139,3 +147,26 @@ def parse_ui_screenshot(image_path) -> dict:
             "texts": [],
             "message": f"{type(exc).__name__}: {exc}",
         }
+
+
+def _normalize_bbox(box, w: int, h: int):
+    """把 bbox 归一为 [x1, y1, x2, y2] 像素整数。
+
+    - None/空：返回 [0,0,0,0]（缺失兜底，保留元素）
+    - dict/字符串/长度≠4/非数值/NaN 等结构异常：返回 None（调用方跳过该元素）
+    兼容 list/tuple/numpy 数组（注意不能用 `if not box` 判空，numpy 数组会抛歧义异常）。
+    """
+    if box is None:
+        return [0, 0, 0, 0]
+    try:
+        if len(box) == 0:
+            return [0, 0, 0, 0]
+        vals = [float(v) for v in box]
+    except (TypeError, ValueError):
+        return None
+    if len(vals) != 4:
+        return None
+    if any(v != v for v in vals):  # NaN
+        return None
+    x1, y1, x2, y2 = vals
+    return [int(x1 * w), int(y1 * h), int(x2 * w), int(y2 * h)]

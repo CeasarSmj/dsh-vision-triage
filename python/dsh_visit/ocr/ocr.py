@@ -57,6 +57,28 @@ def _build_table(engine, image_path, result) -> dict:
         return {"error": f"{type(exc).__name__}: {exc}"}
 
 
+def _normalize_ocr_line(item: list) -> dict | None:
+    """把 rapidocr 单条结果 [box4points, text, score] 归一为规范行；异常跳过。"""
+    try:
+        if not isinstance(item, (list, tuple)) or len(item) < 3:
+            return None
+        box, text, score = item[0], item[1], item[2]
+        if box is None or len(box) == 0:
+            return None
+        pts = [list(p) for p in box]  # 兼容 list/tuple/numpy
+        if len(pts) < 2:
+            return None
+        xs = [float(p[0]) for p in pts]
+        ys = [float(p[1]) for p in pts]
+        return {
+            "text": str(text),
+            "confidence": round(float(score), 4),
+            "bbox": [int(min(xs)), int(min(ys)), int(max(xs)), int(max(ys))],
+        }
+    except (TypeError, ValueError, IndexError):
+        return None
+
+
 def ocr_image(image_path, with_table: bool = False) -> dict:
     """返回规范输出：
     {status, text, lines: [{text, confidence, bbox}], table}
@@ -67,14 +89,9 @@ def ocr_image(image_path, with_table: bool = False) -> dict:
     lines = []
     if result:
         for item in result:
-            box, text, score = item[0], item[1], item[2]
-            xs = [p[0] for p in box]
-            ys = [p[1] for p in box]
-            lines.append({
-                "text": str(text),
-                "confidence": round(float(score), 4),
-                "bbox": [int(min(xs)), int(min(ys)), int(max(xs)), int(max(ys))],
-            })
+            line = _normalize_ocr_line(item)
+            if line is not None:
+                lines.append(line)
 
     table = None
     if with_table:
