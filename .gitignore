@@ -6,16 +6,16 @@ __pycache__/
 *.egg-info/
 python/tests/.smoke-tmp/
 
-# ---- 模型与数据（大文件，不入库）----
+# ---- Models & data (large files, not committed) ----
 models/**/*.pt
 models/**/*.onnx
 models/**/*.pth
 models/**/*.safetensors
-models/runs/            # ultralytics 训练产物（日志/图表）
+models/runs/            # ultralytics training outputs (logs/charts)
 models/omniparser/
-weights/               # 运行时自动下载的第三方权重（如 CLIP）
+weights/                # runtime-downloaded 3rd-party weights (e.g. CLIP)
 python/weights/
-python/*.pt            # 训练时下载的预训练权重（yolov8n-cls.pt 等）
+python/*.pt             # pretrained weights downloaded during training
 data/raw/
 data/yolo/
 data/downloads/
@@ -26,10 +26,10 @@ data/downloads/
 node_modules/
 plugin/node_modules/
 
-# ---- 本地覆盖 ----
+# ---- Local overrides ----
 .env
 *.local
 
-# ---- 系统 ----
+# ---- System ----
 Thumbs.db
 .DS_Store
