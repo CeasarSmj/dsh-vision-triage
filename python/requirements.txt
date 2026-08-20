@@ -1,0 +1,22 @@
+# dsh-vision-triage 本地推理后端依赖
+# 说明：目标环境为 sdenv（Python 3.13 + torch 2.13 + CUDA），以下包已装齐，
+#       无需重复安装。本文件供新环境复现/审计使用。
+
+# ---- 基础 ----
+numpy
+pillow
+opencv-python>=4.8        # 启发式占位分类 + 图像 IO
+
+# ---- 检测 / 分类（ultralytics 生态，ADR-2：仅 PyTorch）----
+ultralytics>=8.3          # YOLO11 / YOLO-World / yolo-classify（sdenv 已验证 8.4.123）
+
+# ---- OCR（ADR-4：不造轮子）----
+rapidocr-onnxruntime>=1.2 # sdenv 已验证 1.2.3
+onnxruntime               # rapidocr 运行时（sdenv 另有 onnxruntime-gpu）
+rapid_table>=3.0          # 表格结构识别（SLANet+，modelscope 源；--with-table 使用）
+
+# ---- M3：OmniParser v2（按官方流程安装，勿用本文件覆盖）----
+# transformers==4.57.2    # 必须锁定 4.x（ADR-8；Florence-2 与 transformers 5.x 不兼容）
+# paddle 相关依赖裁剪     # Python 3.13 装不上 paddle（ADR-9），OCR 分支一律 RapidOCR
+
+# ---- M2：训练（随 ultralytics 一起安装，无需额外依赖）----

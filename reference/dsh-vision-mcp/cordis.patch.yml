@@ -1,0 +1,9 @@
+# dsh-vision-mcp bundle layer: mounts the `describe_image` tool plugin.
+# Override baseUrl/model per deployment via the user patch layer
+# ($DSH_HOME/profiles/<name>/cordis.patch.yml) or a --patch overlay.
+- insert:
+    - id: dsh-vision-mcp
+      name: dsh-vision-mcp
+      config:
+        baseUrl: https://dashscope.aliyuncs.com/compatible-mode/v1
+        model: qwen-vl-max

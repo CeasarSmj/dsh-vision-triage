@@ -1,0 +1,16 @@
+# dsh-vision-triage 插件默认配置（与 plugin/cordis.patch.yml 中 config 对应）
+# 部署时可在 profile 的 cordis.patch.yml 中按需覆盖。
+
+# 本地推理 Python 解释器（环境变量 DSH_VISIT_PYTHON 优先）
+python: E:\conda\envs\sdenv\python.exe
+
+# 模型/数据集目录（环境变量 DSH_VISIT_MODELS_DIR / DSH_VISIT_DATA_DIR 优先）
+# modelsDir:
+# dataDir:
+
+# 云端 describe_image（Qwen-VL）
+baseUrl: https://dashscope.aliyuncs.com/compatible-mode/v1
+model: qwen-vl-max
+
+# 凭据（不在此配置，走 DSH 凭据存储）
+# QWEN_VISION_API_KEY: sk-xxx

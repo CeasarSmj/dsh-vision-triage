@@ -1,0 +1,48 @@
+{
+  "name": "dsh-vision-triage",
+  "version": "0.1.0",
+  "description": "DSH 分级视觉处理流水线插件：轻量本地分类器分诊，分流到 YOLO / YOLO-World / OmniParser / OCR / Qwen-VL",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "src/",
+    "README.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "vision",
+    "triage",
+    "yolo",
+    "yolo-world",
+    "omniparser",
+    "rapidocr",
+    "qwen-vl",
+    "classify",
+    "image"
+  ],
+  "license": "MIT",
+  "author": "CeasarSmj",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CeasarSmj/dsh-vision-triage.git"
+  },
+  "homepage": "https://github.com/CeasarSmj/dsh-vision-triage#readme",
+  "bugs": {
+    "url": "https://github.com/CeasarSmj/dsh-vision-triage/issues"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-tools": "*"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

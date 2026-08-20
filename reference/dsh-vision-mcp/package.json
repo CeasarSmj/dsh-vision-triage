@@ -1,0 +1,34 @@
+{
+  "name": "dsh-vision-mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md",
+    "README.cn.md",
+    "docs/INSTALL.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "vision",
+    "qwen-vl",
+    "image",
+    "mcp"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-tools": "*"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
