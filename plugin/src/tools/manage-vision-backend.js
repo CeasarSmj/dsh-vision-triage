@@ -38,10 +38,36 @@ export function createManageVisionBackendTool(config) {
           running: { type: 'boolean', description: '后端进程是否运行中' },
           released: { type: 'boolean', description: 'release 时：是否曾释放' },
           restarted: { type: 'boolean', description: 'restart 时：是否已重启' },
-          was_running: { type: 'boolean', description: 'restart 时：重启前是否在运行' },
-          process: { type: 'object', additionalProperties: true, description: '进程信息（pid/uptime）' },
-          models: { type: 'object', additionalProperties: true, description: '已加载模型状态（omniparser/ocr/table 等）' },
-          gpu: { type: 'object', additionalProperties: true, description: 'GPU 信息（名称/显存占用 MB）' },
+          was_running: { type: 'boolean', description: 'release/restart 时：操作前是否在运行' },
+          clean_exit: { type: 'boolean', description: 'release 时：是否优雅退出（false=强制终止）' },
+          process: {
+            oneOf: [
+              { type: 'object', additionalProperties: true, description: '进程信息（pid/uptime）' },
+              { type: 'null', description: '后端未运行' },
+            ],
+            description: '进程信息；未运行时为 null',
+          },
+          backend: {
+            oneOf: [
+              { type: 'object', additionalProperties: true, description: '后端连通性' },
+              { type: 'null', description: '后端未运行' },
+            ],
+            description: '后端连通性；未运行时为 null',
+          },
+          models: {
+            oneOf: [
+              { type: 'object', additionalProperties: true, description: '已加载模型状态（omniparser/ocr/table 等）' },
+              { type: 'null', description: '后端未运行' },
+            ],
+            description: '已加载模型状态；未运行时为 null',
+          },
+          gpu: {
+            oneOf: [
+              { type: 'object', additionalProperties: true, description: 'GPU 信息（名称/显存占用 MB）' },
+              { type: 'null', description: '后端未运行' },
+            ],
+            description: 'GPU 信息；未运行时为 null',
+          },
           error: { type: 'string', description: '错误信息' },
         },
       },
@@ -52,7 +78,7 @@ export function createManageVisionBackendTool(config) {
             ? `视觉后端运行中（pid ${value.process?.pid}）｜模型: ${Object.entries(value.models || {}).filter(([, v]) => v).map(([k]) => k).join(', ') || '无'}｜GPU 显存占用 ${value.gpu?.used_mb ?? '?'}MB`
             : '视觉后端未运行（任何视觉工具调用时会自动拉起）'
           : value.action === 'release'
-            ? (value.released ? `已释放常驻后端${value.cleanExit === false ? '（强制终止）' : ''}，GPU 显存已归还` : '后端本就未运行')
+            ? (value.released ? `已释放常驻后端${value.clean_exit === false ? '（强制终止）' : ''}，GPU 显存已归还` : '后端本就未运行')
             : `已重启视觉后端${value.was_running ? '（原进程已释放）' : ''}`,
       }],
     },
@@ -63,7 +89,7 @@ export function createManageVisionBackendTool(config) {
       }
       if (args.action === 'release') {
         const r = await releaseDaemon(config)
-        return { action: 'release', running: false, released: r.released, wasRunning: r.wasRunning, cleanExit: r.cleanExit }
+        return { action: 'release', running: false, released: r.released, was_running: r.wasRunning, clean_exit: r.cleanExit }
       }
       // restart
       const before = await backendStatus(config)

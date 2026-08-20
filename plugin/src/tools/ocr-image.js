@@ -51,7 +51,14 @@ export function createOcrImageTool(config) {
               },
             },
           },
-          table: { type: 'object', additionalProperties: true, description: '表格结构识别结果（with_table=true 且可用时）' },
+          table: {
+            // 后端在 with_table=false 时返回 null（无表格识别请求），需允许空值
+            oneOf: [
+              { type: 'object', additionalProperties: true, description: '表格结构识别结果（html/cell_count/elapse 或 error）' },
+              { type: 'null', description: '未请求表格识别（with_table=false）' },
+            ],
+            description: '表格结构识别结果；with_table=false 时为 null',
+          },
           message: { type: 'string', description: '错误说明' },
         },
       },

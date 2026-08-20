@@ -120,6 +120,7 @@ GPU 紧张 / 暂时不用视觉工具 → manage_vision_backend release（释放
 **输出**：
 
 ```json
+// with_table=true 时 table 为对象；with_table=false 时 table 为 null
 { "status": "ok", "text": "第一行\n第二行",
   "lines": [ { "text": "第一行", "confidence": 0.98, "bbox": [x1,y1,x2,y2] } ],
   "table": { "html": "<html><body><table>…</table></body></html>",
@@ -157,7 +158,7 @@ GPU 紧张 / 暂时不用视觉工具 → manage_vision_backend release（释放
 |---|---|---|---|
 | `action` | string | ✅ | `status`（查看）/ `release`（释放）/ `restart`（重启） |
 
-**输出**（status 示例）：
+**输出**（status 示例；未运行时 `process/backend/models/gpu` 均为 `null`）：
 
 ```json
 { "action": "status", "running": true,
