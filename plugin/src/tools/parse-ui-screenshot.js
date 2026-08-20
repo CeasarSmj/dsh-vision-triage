@@ -50,6 +50,7 @@ export function createParseUiScreenshotTool(config) {
             },
           },
           texts: { type: 'array', description: '截图中识别出的全部文本', items: { type: 'string' } },
+          inverted: { type: 'boolean', description: '深色 UI 是否已自动反色预处理（ADR-15）' },
           message: { type: 'string', description: 'not_ready/error 时的说明' },
         },
       },

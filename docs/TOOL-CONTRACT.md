@@ -80,6 +80,8 @@ GPU 紧张 / 暂时不用视觉工具 → manage_vision_backend release（释放
 - **职责**：对 `classify_structure` 判定为 `ui` 的截图做结构化解析，返回元素/布局/文本
   （YOLO 检测 UI 元素 + Florence-2 生成语义描述 + OCR 提取文本）。
 - **推荐流程**：仅在 L2 判定为 `ui` 后调用；内嵌图片会被识别为元素并附带语义描述，无需再单独分类。
+- **深色 UI**：自动检测（平均亮度 < 128）并反色预处理后解析（ADR-15），返回 `inverted: true`
+  与 message 说明；几何坐标不变。
 - **注意**：首次运行需下载模型（约 1.1GB）并加载 15-25s；未就绪时返回 `{ status: "not_ready" }`。
   安装与修补见 `scripts/setup-omniparser.ps1`（含 paddle 裁剪、空 OCR 修补、Florence-2 remote code 修补）。
 - **回退**：元素结构不足以回答问题时，改用 `describe_image` 做语义追问。

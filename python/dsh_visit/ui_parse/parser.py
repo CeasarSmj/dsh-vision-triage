@@ -28,6 +28,10 @@ BOX_TRESHOLD = 0.05   # OmniParser v2 默认
 IOU_THRESHOLD = 0.7
 BATCH_SIZE = 32       # Florence-2 批量（显存小可调低，官方 128 约 4GB 显存）
 
+# 深色 UI 反色预处理（ADR-15）：OmniParser 的 OCR/YOLO 以浅色 UI 为主训练，
+# 深底浅字效果差；平均亮度低于该阈值时整图反色（白底黑字），几何坐标不变。
+DARK_THRESHOLD = 128
+
 INSTALL_HINT = (
     "OmniParser 未就绪。请运行 scripts/setup-omniparser.ps1："
     "git clone https://github.com/microsoft/OmniParser <models>/omniparser/OmniParser，"
@@ -73,10 +77,15 @@ def parse_ui_screenshot(image_path) -> dict:
     try:
         import contextlib
         import io
-        from PIL import Image
+        from PIL import Image, ImageOps
 
         img = Image.open(str(image_path)).convert("RGB")
         w, h = img.size
+
+        # 深色 UI 自动反色（ADR-15）：深底浅字对 OCR/YOLO 不友好，反色为浅底深字
+        inverted = _maybe_invert(img)
+        if inverted:
+            img = ImageOps.invert(img)
 
         # 静音管线进度输出（ultralytics / OmniParser 会向 stdout/stderr 打印，
         # 会污染 CLI 的 JSON 输出协议；backend.js 也已按"最后一行 JSON"容错）。
@@ -137,7 +146,11 @@ def parse_ui_screenshot(image_path) -> dict:
             "element_count": len(elements),
             "elements": elements,
             "texts": texts,
-            "message": f"已跳过 {skipped} 个 bbox 结构异常的元素" if skipped else "",
+            "inverted": inverted,
+            "message": " ".join(filter(None, [
+                "深色 UI 已自动反色预处理" if inverted else "",
+                f"已跳过 {skipped} 个 bbox 结构异常的元素" if skipped else "",
+            ])),
         }
     except Exception as exc:
         return {
@@ -170,3 +183,18 @@ def _normalize_bbox(box, w: int, h: int):
         return None
     x1, y1, x2, y2 = vals
     return [int(x1 * w), int(y1 * h), int(x2 * w), int(y2 * h)]
+
+
+def _maybe_invert(img) -> bool:
+    """深色 UI 检测：平均亮度 < DARK_THRESHOLD 时返回 True（调用方整图反色）。
+
+    缩小到 64x64 用 ImageStat 求灰度均值，毫秒级。
+    """
+    try:
+        from PIL import ImageStat
+
+        small = img.convert("L").resize((64, 64))
+        mean = ImageStat.Stat(small).mean[0]
+        return mean < DARK_THRESHOLD
+    except Exception:
+        return False
