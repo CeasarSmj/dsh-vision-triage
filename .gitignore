@@ -11,9 +11,11 @@ models/**/*.pt
 models/**/*.onnx
 models/**/*.pth
 models/**/*.safetensors
+models/runs/            # ultralytics 训练产物（日志/图表）
 models/omniparser/
 weights/               # 运行时自动下载的第三方权重（如 CLIP）
 python/weights/
+python/*.pt            # 训练时下载的预训练权重（yolov8n-cls.pt 等）
 data/raw/
 data/yolo/
 data/downloads/
