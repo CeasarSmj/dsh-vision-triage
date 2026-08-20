@@ -38,17 +38,22 @@ node scripts/smoke-describe.mjs <图片路径>      # 云端 Qwen-VL 实测（�
 
 | 里程碑 | 内容 | 状态 |
 |---|---|---|
-| M1 | 重开项目目录，按本文档搭骨架（两级分类器 + 6 工具注册） | ✅ |
-| M2 | 真实数据下载（natural/UI/text/form 各 1000）并训练 L1/L2 | 🔶 脚本就绪；当前为**随机占位权重**，夜间训练后 `export` 覆盖 |
-| M3 | 接入 DSH，验证 6 工具可用与 LLM 自主组装 | 🔶 本地工具与云端已实测，待装入 live profile |
+| M1 | 重开项目目录，按本文档搭骨架（两级分类器 + 7 工具注册） | ✅ |
+| M2 | 真实数据收集并训练 L1/L2 | ✅ 已训练（2026-08-21 夜）：L1 val **100%** / L2 val **88%** |
+| M3 | 接入 DSH，验证 7 工具可用与 LLM 自主组装 | 🔶 本地工具与云端已实测，待装入 live profile |
 | M4 | 真实负载下成本/延迟/精度对比评测 | ⬜ |
 
-**分类器现状（占位，不占算力）**：`python -m dsh_visit.train.init_random` 一键生成
-随机初始化的 yolov8n-cls 权重（L1 二分类 / L2 三分类，各 3MB），让 `classify_image` /
-`classify_structure` 走真实 yolo-classify 推理路径。随机模型置信度通常 < 0.6 →
-`degraded=true` 触发交叉验证策略（ADR-5），语义与"占位不可信"一致。
-**夜间训练**：数据就绪后 `train.data` → `train.train_l1` / `train.train_l2` →
-`train.export l1|l2` 覆盖占位权重，推理路径无需任何改动。
+**分类器现状（已训练，占位已替换）**：
+
+| 分类器 | 数据 | val 准确率 | 实测 |
+|---|---|---|---|
+| L1 content/structure | 1000 真实照片 + 1088 真实网页/截图 | **100%** | 猫咪→content 1.00、Blender→structure 1.00、深色资源管理器→structure 0.95 |
+| L2 ui/text/form | 376/342/370 真实网页 | **88%** | 深色资源管理器→ui 0.995、深色设置面板→ui 0.97、表格→form 0.72 |
+
+数据来源：`fetch_content.py`（picsum 真实照片）+ `render-webpages.mjs`（headless Chromium
+渲染真实网页，URL 见 `data/urls/`）。权重落于 `models/classify/l1.pt|l2.pt`（gitignore）。
+复训：`train.data` → `train.train_l1|train_l2` → 复制 `models/runs/<stage>/weights/best.pt` 覆盖。
+`train.init_random` 仍可用作未训练时的占位回退。
 
 **本地工具走常驻后端（ADR-14）**：插件维持 `python -m dsh_visit daemon` 常驻进程，
 模型进程内缓存（parse-ui 首次 36s → 之后 **1.3s**，约 28 倍加速）。新增
@@ -64,7 +69,7 @@ node scripts/smoke-describe.mjs <图片路径>      # 云端 Qwen-VL 实测（�
 | ⑤ `ocr_image` | ✅ | RapidOCR 提取中英文文本；`--with-table` 表格结构识别（RapidAI TableStructureRec/SLANet+）实测：中文 3x4 表格 → 正确 HTML 结构（约 0.2s） |
 | ④ `parse_ui_screenshot` | ✅ | OmniParser v2 常驻后端（首次 36s，之后 1.3s），中文 UI 截图实测解析出 25 个元素（13 段中文文本 + 12 图标语义描述） |
 | ⑥ `describe_image` | ✅ | 云端 Qwen-VL 实测 6.7s 返回详细中文描述（凭据 `QWEN_VISION_API_KEY` 已配置） |
-| ①② 分类器 | 🔶 | 随机占位权重（init_random），走真实 yolo-classify 路径；夜间训练后 export 覆盖 |
+| ①② 分类器 | ✅ | L1 val 100% / L2 val 88%（2026-08-21 夜训练），真实图实测全部高置信、degraded=false |
 | ⑦ `manage_vision_backend` | ✅ | status / release（释放 GPU 显存）/ restart，崩溃自动重启，实测全通 |
 
 > 本机无法直连 huggingface.co 文件 CDN，相关下载已走 `HF_ENDPOINT=https://hf-mirror.com` 镜像
