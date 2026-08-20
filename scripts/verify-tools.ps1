@@ -31,7 +31,7 @@ $pluginJunction = Join-Path $DSHHome "profiles\$Profile\node_modules\dsh-vision-
 if (Test-Path $pluginJunction) {
     $item = Get-Item $pluginJunction
     Check "插件 junction" ($item.LinkType -eq "Junction") "link=$($item.LinkType)"
-    Check "目标指向本仓库" ($item.Target -eq $PluginDir) "target=$($item.Target)"
+    Check "目标指向本仓库" (@($item.Target) -contains $PluginDir) "target=$($item.Target -join ', ')"
 } else {
     Check "插件 junction" $false "缺失: $pluginJunction（运行 install-plugin.ps1）"
 }
