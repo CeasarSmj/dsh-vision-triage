@@ -1,10 +1,11 @@
 /**
- * ④ parse_ui_screenshot — UI 结构化解析（本地，OmniParser v2）。
- * 返回 UI 元素（类型/文本/边框/语义描述）。首次运行需下载约 1.3GB 模型并加载 15-25s。
+ * ④ parse_ui_screenshot — UI 结构化解析（本地，OmniParser v2，常驻后端）。
+ * 返回 UI 元素（类型/文本/边框/语义描述）。首次调用加载约 1.1GB 模型（15-25s），
+ * 之后常驻后端缓存，秒级响应；可用 manage_vision_backend release 释放。
  */
 
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { runPython } from '../backend.js'
+import { callBackend } from '../backend.js'
 import { resolveImagePath } from '../shared.js'
 
 export function createParseUiScreenshotTool(config) {
@@ -62,7 +63,7 @@ export function createParseUiScreenshotTool(config) {
     timeoutMs: 360_000,
     async execute(args, exec) {
       const filePath = resolveImagePath(args.file_path)
-      return runPython(config, 'parse-ui', ['--input', filePath], { signal: exec.signal })
+      return callBackend(config, 'parse_ui', { input: filePath }, { timeoutMs: 360_000, signal: exec.signal })
     },
   })
 }

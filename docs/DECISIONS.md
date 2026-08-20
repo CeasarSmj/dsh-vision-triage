@@ -96,3 +96,15 @@
   引擎为 None 会崩溃。解法：**显式传入 `ocr_results`**（非 None 时不再调用内部引擎）。
 - **代价**：SLANet+ 对复杂合并单元格/无边框表格的鲁棒性一般；失败时 `table.error`
   携带原因，文本结果不受影响。
+
+## ADR-14：本地工具改走常驻后端（daemon + 行式 JSON-RPC）
+
+- **背景**：旧实现每次工具调用 `spawn` 单次 Python 进程，OmniParser 每次重载
+  Florence-2（约 1GB）需 15-36s，多次 UI 解析成本不可接受。
+- **决策**：`python -m dsh_visit daemon` 常驻进程持有全部模型引擎（模块级单例、懒加载），
+  Node 插件经 stdin/stdout 行式 JSON-RPC 调用；新增 `manage_vision_backend` 工具
+  （status / release / restart）供 agent 管理生命周期——**release 关闭常驻进程归还 GPU
+  （OmniParser 常驻约 2.4GB）**；插件 dispose 自动 release 防僵尸；daemon 崩溃自动重启。
+- **实测**：parse-ui 首次 36s → 常驻二次 1.3s（约 28 倍）。
+- **代价**：常驻进程占用 GPU/内存（可用 release 释放）；RPC 增加一层的实现复杂度；
+  daemon 需 stdout 保护（模型进度输出重定向 stderr，协议行走真实 fd）。

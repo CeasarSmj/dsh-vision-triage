@@ -31,6 +31,7 @@ const expected = [
   'parse_ui_screenshot',
   'ocr_image',
   'describe_image',
+  'manage_vision_backend',
 ]
 
 let failures = 0
@@ -40,7 +41,7 @@ const check = (cond, label, detail = '') => {
 }
 
 console.log(`== 插件名: ${name} ==`)
-check(registered.length === expected.length, '注册工具数 = 6', `实际 ${registered.length}`)
+check(registered.length === expected.length, '注册工具数 = 7', `实际 ${registered.length}`)
 
 const byName = new Map(registered.map((d) => [d.name, d]))
 for (const n of expected) {
@@ -56,5 +57,5 @@ for (const d of registered) {
   check(typeof d.description === 'string' && d.description.length > 40, `${d.name} description 足够详细`, `(${d.description.length} chars)`)
 }
 
-console.log(failures === 0 ? '\n全部通过：6 个工具可注册。' : `\n${failures} 项失败。`)
+console.log(failures === 0 ? '\n全部通过：7 个工具可注册。' : `\n${failures} 项失败。`)
 process.exit(failures === 0 ? 0 : 1)

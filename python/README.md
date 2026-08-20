@@ -1,6 +1,10 @@
 # dsh_visit 本地推理后端
 
-`python -m dsh_visit <cmd>` 统一入口，供 DSH 插件（plugin/src/backend.js）以子进程方式调用。
+两种运行模式，复用同一套实现：
+- **常驻后端（默认，DSH 插件使用）**：`python -m dsh_visit daemon`——行式 JSON-RPC 服务，
+  模型引擎进程内缓存（parse-ui 首次 ~36s，之后秒级）。插件经
+  `plugin/src/backend.js` spawn 并通信，生命周期由 `manage_vision_backend` 工具管理。
+- **单次 CLI（调试/测试/脚本）**：`python -m dsh_visit <cmd>`，每次调用一个进程。
 
 ## 子命令
 
@@ -12,12 +16,18 @@
 | `parse-ui --input <path>` | ④ parse_ui_screenshot | OmniParser v2（setup-omniparser.ps1 安装） |
 | `ocr --input <path> [--with-table]` | ⑤ ocr_image | RapidOCR + 表格结构识别 |
 | `status` | — | 环境/模型就绪度自检 |
+| `daemon` | — | 常驻 JSON-RPC 服务（stdin/stdout 协议，见 `dsh_visit/daemon.py`） |
 
-输出为 stdout 单行 JSON（utf-8）；退出码 `0` 成功 / `1` 参数或 IO 错误 / `2` 推理层错误。
+单次 CLI 输出为 stdout 单行 JSON（utf-8）；退出码 `0` 成功 / `1` 参数或 IO 错误 / `2` 推理层错误。
 
 ## 快速自测
 
 ```powershell
+# 自检
+& E:\conda\envs\sdenv\python.exe -m dsh_visit status
+
+# 常驻后端冒烟（RPC 协议、模型懒加载、常驻加速、shutdown）
+& E:\conda\envs\sdenv\python.exe .\tests\smoke_daemon.py
 # 自检
 & E:\conda\envs\sdenv\python.exe -m dsh_visit status
 

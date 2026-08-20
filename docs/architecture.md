@@ -80,16 +80,28 @@ models/
 └── omniparser/               # OmniParser v2 模型（M3 下载，约 1.3GB）
 ```
 
-## 6. 桥接协议
+## 6. 桥接协议（常驻后端 + 行式 JSON-RPC）
 
-`plugin/src/backend.js` 以子进程方式调用，一次调用一个进程（简单可靠，分类毫秒级、OCR 秒级，
-OmniParser 首次 15-25s 属可接受范围）：
+`plugin/src/backend.js` 维持一个常驻 Python 进程（`python -m dsh_visit daemon`），
+本地工具（分类/检测/OCR/UI 解析）经 **stdin/stdout 行式 JSON-RPC** 调用：
 
 ```
-node 侧:  spawn <python> -m dsh_visit <cmd> --input <path> [--flag ...]
-python 侧: stdout 输出单个 JSON 对象（utf-8），错误走 stderr + 非零退出码
+请求（stdin 每行）:  {id, method, params}
+响应（stdout 每行）: {id, ok: true, result} | {id, ok: false, error}
+方法: classify_image / classify_structure / detect_image / ocr / parse_ui / ping / shutdown
 ```
 
-退出码约定：`0` 成功；`1` 参数/IO 错误；`2` 推理层错误（模型缺失、后端异常）。
-超时与取消：Node 侧用 `AbortSignal.any([exec.signal, AbortSignal.timeout(ms)])` 传给 `spawn` 的 `signal`，
-子进程被杀后按失败结果返回。
+**设计要点（ADR-14）**：
+- **常驻缓存**：模型引擎（OmniParser Florence-2 / RapidOCR / RapidTable / YOLO / 分类器）
+  为 daemon 进程内模块级单例，首次调用加载、之后秒级响应
+  （parse-ui 实测：36s → 1.3s）。进程拉起时零 GPU 占用，模型懒加载。
+- **生命周期**：`manage_vision_backend` 工具（status / release / restart）供 agent 管理；
+  `release` 关闭 daemon 归还 GPU（OmniParser 常驻约 2.4GB）；插件 dispose（DSH 关闭）自动
+  release 防僵尸进程；daemon 崩溃后下次调用自动重启。
+- **超时/取消**：Node 侧 per-call 超时（`timeoutMs`）；`exec.signal` 触发时拒绝调用，
+  迟到的响应按 id 丢弃（模型调用在 daemon 内继续完成，无副作用）。
+- **stdout 保护**：daemon 把模型库的进度输出（ultralytics/tqdm/easyocr）重定向到 stderr，
+  协议行走保留的真实 stdout fd，避免污染。
+
+> CLI 单次模式（`python -m dsh_visit <cmd>`）仍保留，供调试/测试/脚本使用，
+> 与 daemon 复用同一套实现。

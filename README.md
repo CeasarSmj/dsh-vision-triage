@@ -50,15 +50,22 @@ node scripts/smoke-describe.mjs <图片路径>      # 云端 Qwen-VL 实测（�
 **夜间训练**：数据就绪后 `train.data` → `train.train_l1` / `train.train_l2` →
 `train.export l1|l2` 覆盖占位权重，推理路径无需任何改动。
 
+**本地工具走常驻后端（ADR-14）**：插件维持 `python -m dsh_visit daemon` 常驻进程，
+模型进程内缓存（parse-ui 首次 36s → 之后 **1.3s**，约 28 倍加速）。新增
+`manage_vision_backend` 工具供 agent 管理：`status` 查看进程/模型/GPU，
+**`release` 释放常驻后端归还 GPU 显存**（下次调用自动重新拉起），`restart` 重启；
+插件卸载（DSH 关闭）自动释放。
+
 **无需训练的部分已实跑通**（RTX 3060 6GB / sdenv）：
 
 | 工具 | 状态 | 实测 |
 |---|---|---|
 | ③ `detect_natural_image` | ✅ | YOLO11 COCO（yolo11n.pt 自动下载）+ YOLO-World 开放词汇（yolov8s-worldv2.pt 338MB），真实照片检出 cat 0.90/0.88 |
 | ⑤ `ocr_image` | ✅ | RapidOCR 提取中英文文本；`--with-table` 表格结构识别（RapidAI TableStructureRec/SLANet+）实测：中文 3x4 表格 → 正确 HTML 结构（约 0.2s） |
-| ④ `parse_ui_screenshot` | ✅ | OmniParser v2 已接入（setup-omniparser.ps1：clone + 权重 1.1GB + 裁剪 paddle + 空 OCR 修补 + Florence-2 remote code 修补），中文 UI 截图实测解析出 25 个元素（13 段中文文本 + 12 图标语义描述） |
+| ④ `parse_ui_screenshot` | ✅ | OmniParser v2 常驻后端（首次 36s，之后 1.3s），中文 UI 截图实测解析出 25 个元素（13 段中文文本 + 12 图标语义描述） |
 | ⑥ `describe_image` | ✅ | 云端 Qwen-VL 实测 6.7s 返回详细中文描述（凭据 `QWEN_VISION_API_KEY` 已配置） |
 | ①② 分类器 | 🔶 | 随机占位权重（init_random），走真实 yolo-classify 路径；夜间训练后 export 覆盖 |
+| ⑦ `manage_vision_backend` | ✅ | status / release（释放 GPU 显存）/ restart，崩溃自动重启，实测全通 |
 
 > 本机无法直连 huggingface.co 文件 CDN，相关下载已走 `HF_ENDPOINT=https://hf-mirror.com` 镜像
 > （见 `python/dsh_visit/ui_parse/parser.py` 与 `scripts/setup-omniparser.ps1`）。

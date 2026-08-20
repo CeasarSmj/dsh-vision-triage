@@ -1,8 +1,10 @@
-# 工具契约（6 个工具）
+# 工具契约（7 个工具）
 
 > 对应 [项目需求.md](../项目需求.md) §3.3。这里定义每个工具的：模型可见描述（description 的核心内容）、
 > 参数、规范输出（canonical JSON）、推荐使用流程与回退策略。
 > **编排原则**：由 LLM 依据 description 自主组装，不做固定程序化编排。
+> **运行时**：①~⑤ 本地工具经常驻后端（daemon）执行，模型进程内缓存
+> （parse-ui 首次 36s → 之后秒级）；⑦ 管理常驻后端生命周期（ADR-14）。
 
 ## 路由总览
 
@@ -12,6 +14,7 @@ classify_image (L1) ──content──► detect_natural_image（需要细节/�
         └──structure──► classify_structure (L2) ──ui──► parse_ui_screenshot
                                               └─text/form─► ocr_image
 置信度 < 0.6（degraded=true）的任何环节 → describe_image 交叉验证
+GPU 紧张 / 暂时不用视觉工具 → manage_vision_backend release（释放常驻显存）
 ```
 
 ---
@@ -141,12 +144,34 @@ classify_image (L1) ──content──► detect_natural_image（需要细节/�
 
 **输出**：string（模型文本回答）。
 
+## ⑦ manage_vision_backend — 常驻后端生命周期管理
+
+- **职责**：管理本地视觉推理常驻后端（承载 OmniParser/OCR/YOLO/分类器；模型进程内缓存，
+  首次加载后秒级响应，但常驻占用 GPU 显存约 2.4GB）。
+- **推荐流程**：`status` 查看后端与 GPU 状态；**GPU 显存不足或暂时不需要视觉处理时
+  `release` 释放常驻后端归还显存**（下一次任一视觉工具调用会自动重新拉起并懒加载，
+  OmniParser 需再等 15-36s）；`restart` 立即重启。
+- **注意**：这是唯一能改变本地推理运行时状态的工具，调用成本为零，可随时执行。
+
+| 参数 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `action` | string | ✅ | `status`（查看）/ `release`（释放）/ `restart`（重启） |
+
+**输出**（status 示例）：
+
+```json
+{ "action": "status", "running": true,
+  "process": { "pid": 9932, "uptime_s": 8.2 },
+  "models": { "omniparser": true, "ocr": false, "table": false },
+  "gpu": { "name": "NVIDIA GeForce RTX 3060 Laptop GPU", "used_mb": 2468 } }
+```
+
 ---
 
 ## 契约一致性
 
 - 所有工具经 `defineTool`（`@deepseek-ai/dsh-tools`）注册：参数按 `ParameterSchemaSpec` 校验，
   输出按 `ValueSchemaSpec` 校验，非法输出视为失败（`isError`）。
-- 本地工具的输出 schema 与 Python 端 CLI 返回的 JSON 严格对应（字段名/类型一致），
+- 本地工具的输出 schema 与 Python 端 daemon 返回的 JSON 严格对应（字段名/类型一致），
   见 [architecture.md](./architecture.md) §6 桥接协议。
-- 6 个工具注册后即出现在 DSH 模型工具目录（验收标准 §5-1）。
+- 7 个工具注册后即出现在 DSH 模型工具目录（验收标准 §5-1 扩展：+ manage_vision_backend）。

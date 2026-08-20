@@ -122,6 +122,15 @@ def cmd_status(args) -> None:
 # ---- 入口 -------------------------------------------------------------------
 
 def main(argv=None) -> None:
+    # 常驻后端（daemon）分流：不走 argparse 的 JSON 单次协议
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv and argv[0] == "daemon":
+        from .daemon import main as daemon_main
+
+        daemon_main()
+        return
+
     parser = argparse.ArgumentParser(prog="dsh_visit", description="dsh-vision-triage 本地推理后端")
     sub = parser.add_subparsers(dest="command", required=True)
 

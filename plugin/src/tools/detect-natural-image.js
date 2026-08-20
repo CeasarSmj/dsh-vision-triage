@@ -4,7 +4,7 @@
  */
 
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { runPython } from '../backend.js'
+import { callBackend } from '../backend.js'
 import { resolveImagePath } from '../shared.js'
 
 export function createDetectNaturalImageTool(config) {
@@ -72,11 +72,12 @@ export function createDetectNaturalImageTool(config) {
     timeoutMs: 120_000,
     async execute(args, exec) {
       const filePath = resolveImagePath(args.file_path)
-      const passthrough = []
-      if (args.text_prompts) passthrough.push('--text-prompts', args.text_prompts)
-      if (args.conf_threshold != null) passthrough.push('--conf', String(args.conf_threshold))
-      if (args.max_detections != null) passthrough.push('--max-detections', String(args.max_detections))
-      return runPython(config, 'detect-image', ['--input', filePath, ...passthrough], { signal: exec.signal })
+      return callBackend(config, 'detect_image', {
+        input: filePath,
+        text_prompts: args.text_prompts,
+        conf: args.conf_threshold,
+        max_detections: args.max_detections,
+      }, { timeoutMs: 120_000, signal: exec.signal })
     },
   })
 }

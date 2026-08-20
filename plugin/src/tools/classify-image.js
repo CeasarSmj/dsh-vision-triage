@@ -4,7 +4,7 @@
  */
 
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { runPython } from '../backend.js'
+import { callBackend } from '../backend.js'
 import { resolveImagePath, renderJson } from '../shared.js'
 
 export function createClassifyImageTool(config) {
@@ -60,7 +60,7 @@ export function createClassifyImageTool(config) {
     timeoutMs: 30_000,
     async execute(args, exec) {
       const filePath = resolveImagePath(args.file_path)
-      return runPython(config, 'classify-image', ['--input', filePath], { signal: exec.signal })
+      return callBackend(config, 'classify_image', { input: filePath }, { timeoutMs: 30_000, signal: exec.signal })
     },
   })
 }

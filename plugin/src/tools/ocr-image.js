@@ -4,7 +4,7 @@
  */
 
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { runPython } from '../backend.js'
+import { callBackend } from '../backend.js'
 import { resolveImagePath } from '../shared.js'
 
 export function createOcrImageTool(config) {
@@ -65,9 +65,7 @@ export function createOcrImageTool(config) {
     timeoutMs: 120_000,
     async execute(args, exec) {
       const filePath = resolveImagePath(args.file_path)
-      const passthrough = []
-      if (args.with_table) passthrough.push('--with-table')
-      return runPython(config, 'ocr', ['--input', filePath, ...passthrough], { signal: exec.signal })
+      return callBackend(config, 'ocr', { input: filePath, with_table: !!args.with_table }, { timeoutMs: 120_000, signal: exec.signal })
     },
   })
 }
