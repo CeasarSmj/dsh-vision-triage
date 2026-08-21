@@ -131,14 +131,19 @@ GPU 紧张 / 暂时不用视觉工具 → manage_vision_backend release（释放
 
 ## ⑥ describe_image — 云端语义追问（Qwen-VL，按需）
 
-- **职责**：把图片发给云端 Qwen-VL 多模态模型，返回文本描述/回答。融合自
-  [dsh-vision-mcp](https://github.com/CeasarSmj/dsh-vision-mcp)。
+- **职责**：把图片发给云端多模态模型，返回文本描述/回答。支持双后端（OpenAI 兼容
+  chat/completions，融合自 [dsh-vision-mcp](https://github.com/CeasarSmj/dsh-vision-mcp)）：
+  - **qwen（默认）**：Qwen-VL（`QWEN_VISION_API_KEY`，DashScope）
+  - **deepseek**：DeepSeek-V4-Flash-Vision-Exp（`DEEPSEEK_API_KEY`，`api.deepseek.com`）
 - **推荐流程**：**仅在以下场景调用**——
   1. 需要语义理解（"这张图讲什么故事"、"图表说明了什么趋势"）；
   2. 本地分类置信度不足（`degraded: true`）需交叉验证；
   3. 本地工具无法覆盖的追问。
   简单/确定的任务（识别文本、数目标、判类型）先用本地工具，避免云端 token 成本。
-- **凭据**：`QWEN_VISION_API_KEY`（DSH 凭据存储，`Settings → Credentials` 或 `.credentials.yaml`）。
+- **凭据**：按 provider 解析 `QWEN_VISION_API_KEY` / `DEEPSEEK_API_KEY`
+  （DSH 凭据存储，`Settings → Credentials` 或 `.credentials.yaml`）。
+- **实测**：deepseek 后端 12.5s 返回详细中文描述（姿态/项圈/遥控器细节）；
+  qwen 后端 1.1s 简洁回答。
 
 | 参数 | 类型 | 必填 | 说明 |
 |---|---|---|---|

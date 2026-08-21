@@ -1,23 +1,28 @@
 /**
- * describe_image（云端 Qwen-VL）实测脚本。
+ * describe_image（云端多模态）实测脚本，支持多 provider。
  *
- * 从 $DSH_HOME/.credentials.yaml 读取 QWEN_VISION_API_KEY（与 DSH 凭据存储同源），
+ * 从 $DSH_HOME/.credentials.yaml 读取对应凭据（与 DSH 凭据存储同源），
  * 通过插件定义直接调用 execute，验证云端链路可用。
  *
- * 用法：node scripts/smoke-describe.mjs <图片路径> [追问prompt]
+ * 用法：
+ *   node scripts/smoke-describe.mjs <图片路径> [prompt] [--provider qwen|deepseek]
+ *   （provider 默认 qwen；deepseek 用 DEEPSEEK_API_KEY + deepseek-v4-flash-vision-exp）
  */
 
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { apply } from '../plugin/index.js'
 
-const imgArg = process.argv[2]
+const argv = process.argv.slice(2)
+const imgArg = argv.find((a) => !a.startsWith('--'))
+const prompt = argv.find((a, i) => !a.startsWith('--') && i !== 0)
+const provider = argv.includes('--provider') ? argv[argv.indexOf('--provider') + 1] : 'qwen'
+
 if (!imgArg || !existsSync(resolve(imgArg))) {
-  console.error('用法: node scripts/smoke-describe.mjs <图片路径> [prompt]')
+  console.error('用法: node scripts/smoke-describe.mjs <图片路径> [prompt] [--provider qwen|deepseek]')
   process.exit(2)
 }
 const img = resolve(imgArg)
-const prompt = process.argv[3]
 
 // 读取凭据（与 DSH 相同的文件）
 const dshHome = process.env.DSH_HOME || `${process.env.USERPROFILE}\\.dsh`
@@ -27,9 +32,10 @@ if (!existsSync(credFile)) {
   process.exit(2)
 }
 const credRaw = readFileSync(credFile, 'utf8')
-const m = credRaw.match(/^QWEN_VISION_API_KEY:\s*(\S+)/m)
+const keyName = provider === 'deepseek' ? 'DEEPSEEK_API_KEY' : 'QWEN_VISION_API_KEY'
+const m = credRaw.match(new RegExp(`^${keyName}:\\s*(\\S+)`, 'm'))
 if (!m) {
-  console.error('凭据文件中未找到 QWEN_VISION_API_KEY')
+  console.error(`凭据文件中未找到 ${keyName}`)
   process.exit(2)
 }
 
@@ -38,10 +44,10 @@ const ctx = {
   tools: { register: (d) => defs.push(d) },
   credentials: { resolve: async () => ({ value: m[1] }) },
 }
-apply(ctx, {})
+apply(ctx, { provider })
 const tool = defs.find((d) => d.name === 'describe_image')
 
-console.log(`== describe_image: ${img} ==`)
+console.log(`== describe_image (provider=${provider}): ${img} ==`)
 console.log(`prompt: ${prompt || '(默认详细描述)'}`)
 const t0 = Date.now()
 try {

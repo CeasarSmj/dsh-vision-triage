@@ -68,7 +68,7 @@ node scripts/smoke-describe.mjs <图片路径>      # 云端 Qwen-VL 实测（�
 | ③ `detect_natural_image` | ✅ | YOLO11 COCO（yolo11n.pt 自动下载）+ YOLO-World 开放词汇（yolov8s-worldv2.pt 338MB），真实照片检出 cat 0.90/0.88 |
 | ⑤ `ocr_image` | ✅ | RapidOCR 提取中英文文本；`--with-table` 表格结构识别（RapidAI TableStructureRec/SLANet+）实测：中文 3x4 表格 → 正确 HTML 结构（约 0.2s） |
 | ④ `parse_ui_screenshot` | ✅ | OmniParser v2 常驻后端（首次 36s，之后 1.3s），中文 UI 截图实测解析出 25 个元素（13 段中文文本 + 12 图标语义描述） |
-| ⑥ `describe_image` | ✅ | 云端 Qwen-VL 实测 6.7s 返回详细中文描述（凭据 `QWEN_VISION_API_KEY` 已配置） |
+| ⑥ `describe_image` | ✅ | 双后端：Qwen-VL（默认，6.7s 详细描述）+ **DeepSeek-V4-Flash-Vision-Exp**（12.5s，细节更丰富），凭据已配置 |
 | ①② 分类器 | ✅ | L1 val 100% / L2 val 88%（2026-08-21 夜训练），真实图实测全部高置信、degraded=false |
 | ⑦ `manage_vision_backend` | ✅ | status / release（释放 GPU 显存）/ restart，崩溃自动重启，实测全通 |
 
