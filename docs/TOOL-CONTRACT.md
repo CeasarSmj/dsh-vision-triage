@@ -133,8 +133,9 @@ GPU 紧张 / 暂时不用视觉工具 → manage_vision_backend release（释放
 
 - **职责**：把图片发给云端多模态模型，返回文本描述/回答。支持双后端（OpenAI 兼容
   chat/completions，融合自 [dsh-vision-mcp](https://github.com/CeasarSmj/dsh-vision-mcp)）：
-  - **qwen（默认）**：Qwen-VL（`QWEN_VISION_API_KEY`，DashScope）
-  - **deepseek**：DeepSeek-V4-Flash-Vision-Exp（`DEEPSEEK_API_KEY`，`api.deepseek.com`）
+  - **deepseek（默认）**：DeepSeek-V4-Flash-Vision-Exp（`DEEPSEEK_API_KEY`，`api.deepseek.com`；
+    定位/坐标精度高，谷时便宜）
+  - **qwen**：Qwen-VL（`QWEN_VISION_API_KEY`，DashScope；峰时便宜）
 - **推荐流程**：**仅在以下场景调用**——
   1. 需要语义理解（"这张图讲什么故事"、"图表说明了什么趋势"）；
   2. 本地分类置信度不足（`degraded: true`）需交叉验证；

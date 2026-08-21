@@ -1,10 +1,9 @@
-# dsh-vision-triage bundle layer: mounts the 6-tool vision triage pipeline plugin.
+# dsh-vision-triage bundle layer: mounts the 7-tool vision triage pipeline plugin.
 # 与 dsh-vision-mcp 相同的挂载机制（bundle patch 自动生效）。
-# describe_image 的云端 baseUrl/model 可被用户 patch 层覆盖
-# （$DSH_HOME/profiles/<profile>/cordis.patch.yml 或 --patch overlay）。
+# describe_image 默认后端为 DeepSeek-V4-Flash-Vision-Exp（provider: deepseek），
+# 可被用户 patch 层覆盖（$DSH_HOME/profiles/<profile>/cordis.patch.yml 或 --patch overlay）。
 - insert:
     - id: dsh-vision-triage
       name: dsh-vision-triage
       config:
-        baseUrl: https://dashscope.aliyuncs.com/compatible-mode/v1
-        model: qwen-vl-max
+        provider: deepseek

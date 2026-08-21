@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   安装 dsh-vision-triage 插件到指定 DSH profile（junction + cordis.patch.yml 挂载行）。
 
@@ -52,8 +52,7 @@ $mountBlock = @"
     - id: dsh-vision-triage
       name: dsh-vision-triage
       config:
-        baseUrl: https://dashscope.aliyuncs.com/compatible-mode/v1
-        model: qwen-vl-max
+        provider: deepseek
 "@
 
 if (-not (Test-Path $patchFile)) {

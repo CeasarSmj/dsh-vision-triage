@@ -5,8 +5,8 @@
  * 通过插件定义直接调用 execute，验证云端链路可用。
  *
  * 用法：
- *   node scripts/smoke-describe.mjs <图片路径> [prompt] [--provider qwen|deepseek]
- *   （provider 默认 qwen；deepseek 用 DEEPSEEK_API_KEY + deepseek-v4-flash-vision-exp）
+ *   node scripts/smoke-describe.mjs <图片路径> [prompt] [--provider deepseek|qwen]
+ *   （provider 默认 deepseek；qwen 用 QWEN_VISION_API_KEY + qwen-vl-max）
  */
 
 import { readFileSync, existsSync } from 'node:fs'
@@ -16,7 +16,7 @@ import { apply } from '../plugin/index.js'
 const argv = process.argv.slice(2)
 const imgArg = argv.find((a) => !a.startsWith('--'))
 const prompt = argv.find((a, i) => !a.startsWith('--') && i !== 0)
-const provider = argv.includes('--provider') ? argv[argv.indexOf('--provider') + 1] : 'qwen'
+const provider = argv.includes('--provider') ? argv[argv.indexOf('--provider') + 1] : 'deepseek'
 
 if (!imgArg || !existsSync(resolve(imgArg))) {
   console.error('用法: node scripts/smoke-describe.mjs <图片路径> [prompt] [--provider qwen|deepseek]')

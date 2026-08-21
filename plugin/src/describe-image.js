@@ -3,12 +3,12 @@
  *
  * 融合自 dsh-vision-mcp（reference/dsh-vision-mcp/index.js），OpenAI 兼容
  * chat/completions 实现，凭据走 DSH 凭据存储。支持两个视觉后端：
- *   - qwen（默认）   ：阿里云 DashScope Qwen-VL（QWEN_VISION_API_KEY）
- *   - deepseek       ：DeepSeek-V4-Flash-Vision-Exp（DEEPSEEK_API_KEY，
+ *   - qwen    ：阿里云 DashScope Qwen-VL（QWEN_VISION_API_KEY）
+ *   - deepseek（默认）：DeepSeek-V4-Flash-Vision-Exp（DEEPSEEK_API_KEY，
  *                      base_url https://api.deepseek.com，OpenAI 兼容）
  *
  * 插件配置（cordis.patch.yml 行 `config`）：
- *   - provider: 'qwen' | 'deepseek'（默认 qwen）
+ *   - provider: 'deepseek' | 'qwen'（默认 deepseek）
  *   - baseUrl / model / apiKeyRef：显式覆盖（优先于 provider 默认值）
  */
 
@@ -42,7 +42,7 @@ const PROVIDERS = {
 const DEFAULT_PROMPT = '请详细描述这张图片的内容，包括主体、布局、文字、颜色和细节。'
 
 export function createDescribeImageTool(ctx, config = {}) {
-  const providerName = String(config.provider || 'qwen')
+  const providerName = String(config.provider || 'deepseek')
   const provider = PROVIDERS[providerName]
   if (!provider) {
     throw new Error(`describe_image 未知 provider: ${providerName}（支持: ${Object.keys(PROVIDERS).join(', ')}）`)
