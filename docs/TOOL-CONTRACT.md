@@ -129,19 +129,26 @@ GPU 紧张 / 暂时不用视觉工具 → manage_vision_backend release（释放
              "cell_count": 14, "elapse": 0.2 } }
 ```
 
-## ⑥ describe_image — 云端语义追问（Qwen-VL，按需）
+## ⑥ describe_image — 云端语义追问（多 provider，按需）
 
 - **职责**：把图片发给云端多模态模型，返回文本描述/回答。支持双后端（OpenAI 兼容
   chat/completions，融合自 [dsh-vision-mcp](https://github.com/CeasarSmj/dsh-vision-mcp)）：
   - **deepseek（默认）**：DeepSeek-V4-Flash-Vision-Exp（`DEEPSEEK_API_KEY`，`api.deepseek.com`；
-    定位/坐标精度高，谷时便宜）
+    定位/坐标精度高，谷时便宜；**纯文本与多模态同价**）
   - **qwen**：Qwen-VL（`QWEN_VISION_API_KEY`，DashScope；峰时便宜）
+- **与多模态主模型的协作（重要）**：DeepSeek V4 Flash 文本/多模态同价，
+  **若 agent 主模型本身是多模态，图片可直接作为对话输入自行处理，无需调用本工具中转**。
+  本工具定位为兜底/专用渠道：① 主模型非多模态时；② 需独立凭据/独立后端（如 qwen）；
+  ③ 多次追问避免占用主上下文。
 - **推荐流程**：**仅在以下场景调用**——
   1. 需要语义理解（"这张图讲什么故事"、"图表说明了什么趋势"）；
   2. 本地分类置信度不足（`degraded: true`）需交叉验证；
   3. 本地工具无法覆盖的追问。
   简单/确定的任务（识别文本、数目标、判类型）先用本地工具，避免云端 token 成本。
-- **凭据**：按 provider 解析 `QWEN_VISION_API_KEY` / `DEEPSEEK_API_KEY`
+  **精细定位（坐标/点击目标）→ 用 `parse_ui_screenshot`（OmniParser）而非本工具**——
+  OmniParser 返回元素级检测框（实测多模态模型对文字类元素定位偏差 <3pp 尚可、
+  区域/卡片类偏差 15-20pp，OmniParser 框为可靠 ground truth）。
+- **凭据**：按 provider 解析 `DEEPSEEK_API_KEY`（默认）/ `QWEN_VISION_API_KEY`
   （DSH 凭据存储，`Settings → Credentials` 或 `.credentials.yaml`）。
 - **实测**：deepseek 后端 12.5s 返回详细中文描述（姿态/项圈/遥控器细节）；
   qwen 后端 1.1s 简洁回答。
